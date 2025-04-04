@@ -3,6 +3,8 @@ package com.insyte.questionspark.backend.domain.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "stories")
@@ -29,6 +31,9 @@ public class Story {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
+    @OneToMany(mappedBy = "story", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<StoryQuestion> questions = new ArrayList<>();
+
     public UUID getId() {
         return id;
     }
@@ -83,5 +88,18 @@ public class Story {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public List<StoryQuestion> getQuestions() {
+        return questions;
+    }
+
+    public void setQuestions(List<StoryQuestion> questions) {
+        this.questions = questions;
+    }
+
+    public void addQuestion(StoryQuestion question) {
+        questions.add(question);
+        question.setStory(this);
     }
 }

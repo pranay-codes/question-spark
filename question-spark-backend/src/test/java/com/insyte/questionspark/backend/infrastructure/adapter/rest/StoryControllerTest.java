@@ -27,7 +27,9 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.insyte.questionspark.backend.application.port.in.StoryManagementUseCase;
 import com.insyte.questionspark.backend.domain.exception.ServiceException;
+import com.insyte.questionspark.backend.domain.exception.StoryNotFoundException;
 import com.insyte.questionspark.backend.domain.model.Story;
+import com.insyte.questionspark.backend.domain.model.StoryQuestion;
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.exception.GlobalExceptionHandler;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,6 +51,7 @@ public class StoryControllerTest {
             .build();
     }
 
+    // GET /api/v1/stories tests
     @Test
     void test_GetAllStories_ReturnsStories_WhenStoriesExist() throws Exception {
         // Arrange
@@ -84,7 +87,7 @@ public class StoryControllerTest {
 
         verify(storyManagementUseCase).getAllStories();
     }
-
+    
     @Test
     void getAllStories_HandlesException_WhenServiceThrowsError() throws Exception {
         // Arrange
@@ -132,6 +135,118 @@ public class StoryControllerTest {
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].title", is("Story with special chars: !@#$%^&*()")));
+    }
+
+    // GET /api/v1/stories/{id} tests
+    @Test
+    void getStoryById_ReturnsStory_WhenStoryExists() throws Exception {
+        // Arrange
+        UUID storyId = UUID.randomUUID();
+        Story story = createStoryWithQuestions(storyId, "Test Story", 
+            "Description", "Initial prompt", 
+            Collections.singletonList(createSampleQuestion()));
+        
+        when(storyManagementUseCase.getStoryWithQuestions(storyId)).thenReturn(story);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/stories/{id}", storyId)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id", is(storyId.toString())))
+                .andExpect(jsonPath("$.title", is("Test Story")))
+                .andExpect(jsonPath("$.description", is("Description")))
+                .andExpect(jsonPath("$.initialPrompt", is("Initial prompt")))
+                .andExpect(jsonPath("$.questions").exists());
+
+        verify(storyManagementUseCase).getStoryWithQuestions(storyId);
+    }
+
+    @Test
+    void getStoryById_Returns404_WhenStoryNotFound() throws Exception {
+        // Arrange
+        UUID storyId = UUID.randomUUID();
+        when(storyManagementUseCase.getStoryWithQuestions(storyId))
+            .thenThrow(new StoryNotFoundException("Story not found"));
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/stories/{id}", storyId)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is("Story not found")))
+                .andExpect(jsonPath("$.code", is("404")));
+
+        verify(storyManagementUseCase).getStoryWithQuestions(storyId);
+    }
+
+    @Test
+    void getStoryById_Returns400_WhenInvalidUUID() throws Exception {
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/stories/invalid-uuid")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Invalid UUID")))
+                .andExpect(jsonPath("$.code", is("400")));
+    }
+
+    @Test
+    void getStoryById_HandlesSpecialCharacters_InStoryData() throws Exception {
+        // Arrange
+        UUID storyId = UUID.randomUUID();
+        Story story = createStoryWithQuestions(storyId, 
+            "Story with special chars: !@#$%^&*()", 
+            "Description with üñíçødé", 
+            "Initial prompt with 中文",
+            Collections.singletonList(createSampleQuestion()));
+        
+        when(storyManagementUseCase.getStoryWithQuestions(storyId)).thenReturn(story);
+
+        // Act & Assert
+        mockMvc.perform(get("/api/v1/stories/{id}", storyId)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title", is("Story with special chars: !@#$%^&*()")))
+                .andExpect(jsonPath("$.description", is("Description with üñíçødé")))
+                .andExpect(jsonPath("$.initialPrompt", is("Initial prompt with 中文")));
+    }
+
+    // Helper Methods
+    private Story createStoryWithQuestions(UUID id, String title, 
+        String description, String initialPrompt, List<StoryQuestion> questions) {
+        Story story = new Story();
+        story.setId(id);
+        story.setTitle(title);
+        story.setDescription(description);
+        story.setInitialPrompt(initialPrompt);
+        story.setQuestions(questions);
+        return story;
+    }
+
+    private StoryQuestion createSampleQuestion() {
+        StoryQuestion question = new StoryQuestion();
+        question.setId(UUID.randomUUID());
+        question.setQuestionText("""
+        {
+          "question": {
+            "type": "text",
+            "content": "What should the robot do after finding the puppy?"
+          },
+          "response": {
+            "type": "generated",
+            "content": "The robot gently picks up the puppy and looks around."
+          },
+          "follow_ups": [
+            {
+              "action": "Search for the puppy's owner",
+              "narrative": {
+                "id": "narrative-001",
+                "content": "The robot walks around the park."
+              }
+            }
+          ]
+        }
+        """);
+        return question;
     }
 
     private Story createSampleStory(String title) {

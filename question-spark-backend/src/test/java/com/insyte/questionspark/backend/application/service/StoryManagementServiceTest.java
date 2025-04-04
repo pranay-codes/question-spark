@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.insyte.questionspark.backend.application.port.out.StoryRepositoryPort;
 import com.insyte.questionspark.backend.domain.exception.ServiceException;
+import com.insyte.questionspark.backend.domain.exception.StoryNotFoundException;
 import com.insyte.questionspark.backend.domain.model.Story;
 
 @ExtendWith(MockitoExtension.class)
@@ -74,6 +75,47 @@ public class StoryManagementServiceTest {
             .isInstanceOf(ServiceException.class)
             .hasMessage("Error fetching stories: Database error");
         verify(storyRepositoryPort).findAll();
+    }
+
+    @Test
+    void getStoryWithQuestions_ShouldReturnStory_WhenStoryExists() throws ServiceException, StoryNotFoundException {
+        // Arrange
+        UUID storyId = UUID.randomUUID();
+        Story expectedStory = new Story();
+        expectedStory.setId(storyId);
+        when(storyRepositoryPort.findById(storyId)).thenReturn(java.util.Optional.of(expectedStory));
+
+        // Act
+        Story result = storyManagementService.getStoryWithQuestions(storyId);
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(storyId);
+        verify(storyRepositoryPort).findById(storyId);
+    }
+
+    @Test
+    void getStoryWithQuestions_ShouldThrowNotFoundException_WhenStoryDoesNotExist() {
+        // Arrange
+        UUID storyId = UUID.randomUUID();
+        when(storyRepositoryPort.findById(storyId)).thenReturn(java.util.Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> storyManagementService.getStoryWithQuestions(storyId))
+            .isInstanceOf(StoryNotFoundException.class)
+            .hasMessageContaining("Story not found with id: " + storyId);
+    }
+
+    @Test
+    void getStoryWithQuestions_ShouldThrowServiceException_WhenRepositoryFails() {
+        // Arrange
+        UUID storyId = UUID.randomUUID();
+        when(storyRepositoryPort.findById(storyId)).thenThrow(new RuntimeException("Database error"));
+
+        // Act & Assert
+        assertThatThrownBy(() -> storyManagementService.getStoryWithQuestions(storyId))
+            .isInstanceOf(ServiceException.class)
+            .hasMessageContaining("Error fetching story with questions: Database error");
     }
 
     private Story createSampleStory(String title) {

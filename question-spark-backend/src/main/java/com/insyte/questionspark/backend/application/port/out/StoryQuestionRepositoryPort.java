@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.Optional;
 
+// might not need this interface, as it is not used in the application layer
 public interface StoryQuestionRepositoryPort {
     StoryQuestion save(StoryQuestion question);
     Optional<StoryQuestion> findById(UUID id);

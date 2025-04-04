@@ -4,11 +4,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.http.MediaType;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 import com.insyte.questionspark.backend.domain.exception.ServiceException;
+import com.insyte.questionspark.backend.domain.exception.StoryNotFoundException;
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.ErrorResponse;
 
 @ControllerAdvice
@@ -53,6 +55,31 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(error);
+    }
+
+    @ExceptionHandler(StoryNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(StoryNotFoundException ex) {
+        ErrorResponse error = new ErrorResponse(
+            String.valueOf(HttpStatus.NOT_FOUND.value()),
+            ex.getMessage()
+        );
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(error);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String message = String.format("Invalid UUID format: %s", ex.getValue());
+        ErrorResponse error = new ErrorResponse(
+            String.valueOf(HttpStatus.BAD_REQUEST.value()),
+            message
+        );
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
             .contentType(MediaType.APPLICATION_JSON)
             .body(error);
     }
