@@ -2,7 +2,7 @@ package com.insyte.questionspark.backend.application.mapper;
 
 import com.insyte.questionspark.backend.domain.model.Story;
 import com.insyte.questionspark.backend.domain.model.StoryQuestion;
-import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDto;
+import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDTO;
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDetailDTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -127,7 +127,7 @@ class StoryMapperTest {
         story.setCreatedAt(LocalDateTime.now());
 
         // Act
-        StoryDto dto = StoryMapper.toDto(story);
+        StoryDTO dto = StoryMapper.toDto(story);
 
         // Assert
         assertThat(dto).isNotNull();

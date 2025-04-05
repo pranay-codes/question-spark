@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.insyte.questionspark.backend.application.mapper.StoryMapper;
 import com.insyte.questionspark.backend.application.port.in.StoryManagementUseCase;
 import com.insyte.questionspark.backend.domain.model.Story;
-import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDto;
+import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDTO;
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDetailDTO;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,8 +45,8 @@ public class StoryController {
     })
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE, 
                 consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<List<StoryDto>> getAllStories() throws Exception{
-        List<StoryDto> stories = storyManagementUseCase.getAllStories()
+    public ResponseEntity<List<StoryDTO>> getAllStories() throws Exception{
+        List<StoryDTO> stories = storyManagementUseCase.getAllStories()
             .stream()
             .map(StoryMapper::toDto)
             .collect(Collectors.toList());

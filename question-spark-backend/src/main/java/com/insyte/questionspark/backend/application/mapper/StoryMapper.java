@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.insyte.questionspark.backend.domain.model.Story;
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDetailDTO;
-import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDto;
+import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDTO;
 
 import java.util.Collections;
 import java.util.Map;
@@ -13,14 +13,14 @@ public class StoryMapper {
     private StoryMapper() {
         // Private constructor to prevent instantiation
     }    
-    public static StoryDto toDto(Story story) {
+    public static StoryDTO toDto(Story story) {
         if (story == null) {
             return null;
         }
-        return new StoryDto(story.getId(), story.getTitle(), story.getDescription(), story.getCreatedAt());
+        return new StoryDTO(story.getId(), story.getTitle(), story.getDescription(), story.getCreatedAt());
     }
     
-    public static Story toEntity(StoryDto storyDto) {
+    public static Story toEntity(StoryDTO storyDto) {
         if (storyDto == null) {
             return null;
         }
