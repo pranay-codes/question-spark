@@ -1,4 +1,4 @@
-CREATE TABLE profile (
+CREATE TABLE profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     username TEXT UNIQUE NOT NULL,
     full_name TEXT,
@@ -14,7 +14,7 @@ CREATE TABLE stories (
     title VARCHAR(255) NOT NULL,
     description TEXT,
     initial_prompt TEXT NOT NULL,
-    author_id UUID REFERENCES profile (id) ON DELETE SET NULL,
+    author_id UUID REFERENCES profiles (id) ON DELETE SET NULL,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -32,7 +32,7 @@ CREATE TABLE story_questions (
 CREATE TABLE story_narrative (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     story_id UUID REFERENCES stories(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES profile (id) ON DELETE CASCADE,
+    user_id UUID REFERENCES profiles (id) ON DELETE CASCADE,
     parent_narrative_id UUID REFERENCES story_narrative(id) ON DELETE SET NULL,
     question_id UUID REFERENCES story_questions(id) ON DELETE CASCADE,  -- Foreign key to story_questions table
     choice_text TEXT NOT NULL,           -- Available choice text presented to the user
@@ -44,7 +44,7 @@ CREATE TABLE story_narrative (
 
 CREATE TABLE user_story_progress (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES profile (id) ON DELETE CASCADE,
+    user_id UUID REFERENCES profiles (id) ON DELETE CASCADE,
     story_id UUID REFERENCES stories(id) ON DELETE CASCADE,
     current_narrative_id UUID REFERENCES story_narrative(id) ON DELETE CASCADE,
     progress_path JSONB NOT NULL, -- Stores the sequence of choices made
@@ -63,3 +63,4 @@ CREATE TABLE cached_story_prompts (
     expires_at TIMESTAMP NOT NULL, -- TTL for caching
     created_at TIMESTAMP DEFAULT NOW()
 );
+s
