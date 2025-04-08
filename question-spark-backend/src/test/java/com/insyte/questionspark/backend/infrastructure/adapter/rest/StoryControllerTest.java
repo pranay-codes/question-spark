@@ -1,8 +1,13 @@
 package com.insyte.questionspark.backend.infrastructure.adapter.rest;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -10,9 +15,11 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.containsString;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,8 +28,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.quality.Strictness;
+import org.mockito.junit.jupiter.MockitoSettings;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -30,15 +40,20 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.insyte.questionspark.backend.application.mapper.StoryMapper;
 import com.insyte.questionspark.backend.application.port.in.StoryManagementUseCase;
+import com.insyte.questionspark.backend.application.port.in.StoryNarrationUseCase;
 import com.insyte.questionspark.backend.domain.exception.ServiceException;
 import com.insyte.questionspark.backend.domain.exception.StoryNotFoundException;
 import com.insyte.questionspark.backend.domain.model.Story;
+import com.insyte.questionspark.backend.domain.model.StoryNarrative;
 import com.insyte.questionspark.backend.domain.model.StoryQuestion;
+import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.CreateNarrationRequest;
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDTO;
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDetailDTO;
+import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryNarrativeDTO;
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.exception.GlobalExceptionHandler;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class StoryControllerTest {
     
     @Mock
@@ -46,6 +61,9 @@ public class StoryControllerTest {
 
     @Mock
     private StoryMapper storyMapper;
+
+    @Mock
+    private StoryNarrationUseCase storyNarrationUseCase;
 
     @InjectMocks
     private StoryController storyController;
@@ -101,7 +119,61 @@ public class StoryControllerTest {
 
         verify(storyManagementUseCase).getAllStories();
     }
+
+    @Test
+    void createNarration_ReturnsCreatedNarration_WhenSuccessful() throws Exception {
+        // Arrange
+        UUID storyId = UUID.randomUUID();
+        CreateNarrationRequest request = new CreateNarrationRequest(
+            null, 
+            UUID.randomUUID(), 
+            "questionText", 
+            "responseText", 
+            "action", 
+            null, 
+            UUID.randomUUID().toString());
+        StoryNarrative narrative = new StoryNarrative();
+        narrative.setId(UUID.randomUUID());
+        narrative.setChoiceText("choiceText");
+        narrative.setResponseText("responseText");
+        narrative.setCreatedAt(LocalDateTime.now());
+
+        when(storyNarrationUseCase.createNarration(any(), any()))
+            .thenReturn(narrative);
+        
+            System.out.println("STORY NARRATIVE--->" + narrative.getId());
+        when(storyMapper.toNarrativeDTO(any(StoryNarrative.class))).thenReturn(new StoryNarrativeDTO(
+            narrative.getId(),
+            storyId,
+            narrative.getResponseText(),
+            narrative.getCreatedAt()
+        ));
+
+        
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/stories/{storyId}/narration", storyId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(narrative.getId().toString())))
+
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.storyId", is(storyId.toString())))
+                .andExpect(jsonPath("$.content", is("responseText")))
+                .andExpect(jsonPath("$.createdAt").exists());
+
+
+// System.out.println("CONTENT TYPE--->" + result.getResponse().getContentType());
+
+
+    verify(storyNarrationUseCase).createNarration(eq(storyId), argThat(req ->
+        Objects.equals(req.action(), request.action()) &&
+        Objects.equals(req.questionId(), request.questionId()) 
+    )); // Verify that the request object passed to the use case matches the expected values       
     
+    verify(storyMapper).toNarrativeDTO(narrative);
+    }
+
     @Test
     void getAllStories_HandlesException_WhenServiceThrowsError() throws Exception {
         // Arrange

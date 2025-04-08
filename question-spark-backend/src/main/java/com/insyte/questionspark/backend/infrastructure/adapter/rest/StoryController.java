@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import javax.print.attribute.standard.Media;
 
+import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 @Tag(name = "Story", description = "Story management APIs")
 public class StoryController {
     
+    private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(StoryController.class);
+
     private final StoryManagementUseCase storyManagementUseCase;
     private final StoryNarrationUseCase storyNarrationUseCase;
     private final StoryMapper storyMapper;
@@ -100,13 +103,14 @@ public class StoryController {
         @Parameter(description = "Narration details") 
         @RequestBody CreateNarrationRequest request
     ) throws Exception {
-
-        StoryNarrative narrative = storyNarrationUseCase.createNarration(storyId, request);
-        StoryNarrativeDTO narrativeDTO = storyMapper.toNarrativeDTO(narrative);
-        if (narrativeDTO == null) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        try {
+            StoryNarrative narrative = storyNarrationUseCase.createNarration(storyId, request);
+            StoryNarrativeDTO narrativeDTO = storyMapper.toNarrativeDTO(narrative);
+            return ResponseEntity.status(HttpStatus.OK).body(narrativeDTO);
+        } catch (Exception e) {
+            LOGGER.error("Error creating narration for story ID {}: {}", storyId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // Or a more specific error response
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(narrativeDTO);
     }
 
 }
