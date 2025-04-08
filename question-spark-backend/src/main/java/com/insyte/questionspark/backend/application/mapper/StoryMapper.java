@@ -12,18 +12,19 @@ import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryNar
 import java.util.Collections;
 import java.util.Map;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class StoryMapper {
-    private StoryMapper() {
-        // Private constructor to prevent instantiation
-    }    
-    public static StoryDTO toDto(Story story) {
+
+    public StoryDTO toDto(Story story) {
         if (story == null) {
             return null;
         }
         return new StoryDTO(story.getId(), story.getTitle(), story.getDescription(), story.getCreatedAt());
     }
-    
-    public static Story toEntity(StoryDTO storyDto) {
+
+    public Story toEntity(StoryDTO storyDto) {
         if (storyDto == null) {
             return null;
         }
@@ -35,19 +36,21 @@ public class StoryMapper {
         return story;
     }
 
-    public static StoryDetailDTO toDetailDTO(Story story) {
-        StoryDetailDTO dto = new StoryDetailDTO(
-            story.getId(), 
-            story.getTitle(), 
-            story.getDescription(), 
-            story.getInitialPrompt(), 
+    public StoryDetailDTO toDetailDTO(Story story) {
+        if (story == null) {
+            return null;
+        }
+        return new StoryDetailDTO(
+            story.getId(),
+            story.getTitle(),
+            story.getDescription(),
+            story.getInitialPrompt(),
             story.getQuestions() != null && !story.getQuestions().isEmpty() ? story.getQuestions().get(0).getId() : null,
             story.getQuestions() != null && !story.getQuestions().isEmpty() ? story.getQuestions().get(0).getQuestionText() : null
         );
-        return dto;
     }
 
-    public static StoryNarrativeDTO toNarrativeDTO(StoryNarrative narrative) {
+    public StoryNarrativeDTO toNarrativeDTO(StoryNarrative narrative) {
         if (narrative == null) {
             return null;
         }

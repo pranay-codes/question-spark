@@ -28,11 +28,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.insyte.questionspark.backend.application.mapper.StoryMapper;
 import com.insyte.questionspark.backend.application.port.in.StoryManagementUseCase;
 import com.insyte.questionspark.backend.domain.exception.ServiceException;
 import com.insyte.questionspark.backend.domain.exception.StoryNotFoundException;
 import com.insyte.questionspark.backend.domain.model.Story;
 import com.insyte.questionspark.backend.domain.model.StoryQuestion;
+import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDTO;
+import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDetailDTO;
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.exception.GlobalExceptionHandler;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,6 +43,9 @@ public class StoryControllerTest {
     
     @Mock
     private StoryManagementUseCase storyManagementUseCase;
+
+    @Mock
+    private StoryMapper storyMapper;
 
     @InjectMocks
     private StoryController storyController;
@@ -63,6 +69,8 @@ public class StoryControllerTest {
         List<Story> stories = Arrays.asList(story1, story2);
         
         when(storyManagementUseCase.getAllStories()).thenReturn(stories);
+        when(storyMapper.toDto(story1)).thenReturn(new StoryDTO(story1.getId(), story1.getTitle(), story1.getDescription(), story1.getCreatedAt()));
+        when(storyMapper.toDto(story2)).thenReturn(new StoryDTO(story2.getId(), story2.getTitle(), story2.getDescription(), story2.getCreatedAt()));
 
         // Act & Assert
         mockMvc.perform(get("/api/v1/stories")
@@ -74,6 +82,9 @@ public class StoryControllerTest {
                 .andExpect(jsonPath("$[1].title", is("Story 2")));
 
         verify(storyManagementUseCase).getAllStories();
+
+        verify(storyMapper).toDto(story1);
+        verify(storyMapper).toDto(story2);
     }
 
     @Test
@@ -132,6 +143,7 @@ public class StoryControllerTest {
         // Arrange
         Story story = createSampleStory("Story with special chars: !@#$%^&*()");
         when(storyManagementUseCase.getAllStories()).thenReturn(List.of(story));
+        when(storyMapper.toDto(story)).thenReturn(new StoryDTO(story.getId(), story.getTitle(), story.getDescription(), story.getCreatedAt()));
 
         // Act & Assert
         mockMvc.perform(get("/api/v1/stories")
@@ -150,6 +162,15 @@ public class StoryControllerTest {
             Collections.singletonList(createSampleQuestion()));
         
         when(storyManagementUseCase.getStoryWithQuestions(storyId)).thenReturn(story);
+        when(storyMapper.toDetailDTO(story))
+            .thenReturn(
+                new StoryDetailDTO(
+                    storyId, 
+                    story.getTitle(), 
+                    story.getDescription(), 
+                    story.getInitialPrompt(), 
+                    story.getQuestions().get(0).getId(), 
+                    story.getQuestions().get(0).getQuestionText()));
 
         // Act & Assert
         mockMvc.perform(get("/api/v1/stories/{id}", storyId)
@@ -163,6 +184,7 @@ public class StoryControllerTest {
                 .andExpect(jsonPath("$.question").exists());
 
         verify(storyManagementUseCase).getStoryWithQuestions(storyId);
+        verify(storyMapper).toDetailDTO(story);
     }
 
     @Test
@@ -203,6 +225,16 @@ public class StoryControllerTest {
             Collections.singletonList(createSampleQuestion()));
         
         when(storyManagementUseCase.getStoryWithQuestions(storyId)).thenReturn(story);
+
+        when(storyMapper.toDetailDTO(story))
+            .thenReturn(
+                new StoryDetailDTO(
+                    storyId, 
+                    story.getTitle(), 
+                    story.getDescription(), 
+                    story.getInitialPrompt(), 
+                    story.getQuestions().get(0).getId(), 
+                    story.getQuestions().get(0).getQuestionText()));
 
         // Act & Assert
         mockMvc.perform(get("/api/v1/stories/{id}", storyId)

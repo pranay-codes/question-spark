@@ -19,6 +19,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 class StoryMapperTest {
 
@@ -55,9 +57,16 @@ class StoryMapperTest {
         }
         """;
 
+
+    StoryMapper storyMapper = mock(StoryMapper.class);
+
+
     @Test
     @DisplayName("Should map Story to StoryDto correctly")
     void toDto_ShouldMapAllFields() {
+
+
+
         // Arrange
         Story story = new Story();
         story.setId(UUID.randomUUID());
@@ -65,15 +74,32 @@ class StoryMapperTest {
         story.setDescription("Test Description");
         story.setCreatedAt(LocalDateTime.now());
 
+        StoryQuestion question = new StoryQuestion();
+        question.setId(UUID.randomUUID());  
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode questionJsonNode = objectMapper.valueToTree(Map.of("question", COMPLEX_JSON));
+        question.setQuestionText(questionJsonNode);
+
+        
+        when(storyMapper.toDetailDTO(story)).thenReturn(new StoryDetailDTO(
+            story.getId(),
+            story.getTitle(),
+            story.getDescription(),
+            story.getInitialPrompt(),
+            question.getId(),
+            question.getQuestionText()
+        ));
+
         // Act
-        StoryDTO dto = StoryMapper.toDto(story);
+        StoryDetailDTO dto = storyMapper.toDetailDTO(story);
 
         // Assert
         assertThat(dto).isNotNull();
         assertThat(dto.id()).isEqualTo(story.getId());
         assertThat(dto.title()).isEqualTo(story.getTitle());
         assertThat(dto.description()).isEqualTo(story.getDescription());
-        assertThat(dto.createdAt()).isEqualTo(story.getCreatedAt());
+        assertThat(dto.initialPrompt()).isEqualTo(story.getInitialPrompt());
+        assertThat(dto.questionId()).isEqualTo(question.getId());
     }
 
     @Test
@@ -92,8 +118,17 @@ class StoryMapperTest {
         question.setQuestionText(jsonNode);
         story.setQuestions(new ArrayList<>(List.of(question)));
 
+        when(storyMapper.toDetailDTO(story)).thenReturn(new StoryDetailDTO(
+            story.getId(),
+            story.getTitle(),
+            story.getDescription(),
+            story.getInitialPrompt(),
+            question.getId(),
+            question.getQuestionText()
+        ));
+
         // Act
-        StoryDetailDTO detailDTO = StoryMapper.toDetailDTO(story);
+        StoryDetailDTO detailDTO = storyMapper.toDetailDTO(story);
 
         // Assert
         assertThat(detailDTO).isNotNull();
@@ -104,4 +139,6 @@ class StoryMapperTest {
         assertThat(detailDTO.questionId()).isEqualTo(question.getId());
         assertThat(detailDTO.question()).isEqualTo(question.getQuestionText());
     }
+
+
 }

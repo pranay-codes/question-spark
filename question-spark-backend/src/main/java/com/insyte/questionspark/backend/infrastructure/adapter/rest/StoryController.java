@@ -41,13 +41,16 @@ public class StoryController {
     
     private final StoryManagementUseCase storyManagementUseCase;
     private final StoryNarrationUseCase storyNarrationUseCase;
+    private final StoryMapper storyMapper;
 
     public StoryController(
         StoryManagementUseCase storyManagementUseCase,
-        StoryNarrationUseCase storyNarrationUseCase
+        StoryNarrationUseCase storyNarrationUseCase,
+        StoryMapper storyMapper
     ) {
         this.storyManagementUseCase = storyManagementUseCase;
         this.storyNarrationUseCase = storyNarrationUseCase;
+        this.storyMapper = storyMapper;
     }
 
     @Operation(summary = "Get all stories", description = "Retrieves a list of all available stories")
@@ -60,7 +63,7 @@ public class StoryController {
     public ResponseEntity<List<StoryDTO>> getAllStories() throws Exception{
         List<StoryDTO> stories = storyManagementUseCase.getAllStories()
             .stream()
-            .map(StoryMapper::toDto)
+            .map(storyMapper::toDto)
             .collect(Collectors.toList());
         return ResponseEntity.ok(stories);
     }
@@ -77,7 +80,7 @@ public class StoryController {
             @Parameter(description = "ID of the story to retrieve") 
             @PathVariable("storyId") UUID storyId) throws Exception {
         Story story = storyManagementUseCase.getStoryWithQuestions(storyId);
-        return ResponseEntity.ok(StoryMapper.toDetailDTO(story));
+        return ResponseEntity.ok(storyMapper.toDetailDTO(story));
     }
 
     @Operation(summary = "Create story narration", description = "Creates a new narration for a story")
@@ -99,11 +102,11 @@ public class StoryController {
     ) throws Exception {
 
         StoryNarrative narrative = storyNarrationUseCase.createNarration(storyId, request);
-        StoryNarrativeDTO narrativeDTO = StoryMapper.toNarrativeDTO(narrative);
+        StoryNarrativeDTO narrativeDTO = storyMapper.toNarrativeDTO(narrative);
         if (narrativeDTO == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(narrativeDTO);
     }
-    
+
 }

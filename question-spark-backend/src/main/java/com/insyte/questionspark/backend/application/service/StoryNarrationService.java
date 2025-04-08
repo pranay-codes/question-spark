@@ -43,8 +43,15 @@ public class StoryNarrationService implements StoryNarrationUseCase {
             var story = storyRepositoryPort.findById(storyId)
                 .orElseThrow(() -> new StoryNotFoundException("Story not found with id: " + storyId));
 
+            var question = story.getQuestions().stream()
+                .filter(q -> q.getId().equals(request.questionId()))
+                .findFirst()
+                .orElseThrow(() -> new ServiceException("Question not found with id: " + request.questionId()));
+
             var narrative = new StoryNarrative();
             narrative.setStory(story);
+            narrative.setQuestion(question);
+            
             if (request.parentNarrativeId() != null) {
                 storyNarrativeRepositoryPort.findById(request.parentNarrativeId())
                     .ifPresent(narrative::setParentNarrative);
