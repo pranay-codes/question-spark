@@ -97,8 +97,12 @@ public class StoryController {
         @Parameter(description = "Narration details") 
         @RequestBody CreateNarrationRequest request
     ) throws Exception {
+
         StoryNarrative narrative = storyNarrationUseCase.createNarration(storyId, request);
         StoryNarrativeDTO narrativeDTO = StoryMapper.toNarrativeDTO(narrative);
+        if (narrativeDTO == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(narrativeDTO);
     }
     
