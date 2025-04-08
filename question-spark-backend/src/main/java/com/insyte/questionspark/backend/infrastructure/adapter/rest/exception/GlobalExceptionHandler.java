@@ -1,5 +1,6 @@
 package com.insyte.questionspark.backend.infrastructure.adapter.rest.exception;
 
+import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -16,6 +17,8 @@ import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.ErrorRes
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(ServiceException.class)
     public ResponseEntity<ErrorResponse> handleServiceException(ServiceException ex) {
         ErrorResponse error = new ErrorResponse(
@@ -29,6 +32,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        LOGGER.error("An unexpected error occurred: {}", ex.getMessage(), ex);
         ErrorResponse error = new ErrorResponse(
             "INTERNAL_ERROR",
             "An unexpected error occurred"

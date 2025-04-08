@@ -3,9 +3,10 @@ package com.insyte.questionspark.backend.domain.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
-@Table(name = "profile")
+@Table(name = "profiles")
 public class Profile {
     @Id
     private UUID id;

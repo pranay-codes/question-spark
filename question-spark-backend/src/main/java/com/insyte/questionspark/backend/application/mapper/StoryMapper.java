@@ -3,8 +3,11 @@ package com.insyte.questionspark.backend.application.mapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.insyte.questionspark.backend.domain.model.Story;
+import com.insyte.questionspark.backend.domain.model.StoryQuestion;
+import com.insyte.questionspark.backend.domain.model.StoryNarrative;
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDetailDTO;
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDTO;
+import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryNarrativeDTO;
 
 import java.util.Collections;
 import java.util.Map;
@@ -38,17 +41,21 @@ public class StoryMapper {
             story.getTitle(), 
             story.getDescription(), 
             story.getInitialPrompt(), 
-            parseQuestionJson(story.getQuestions().get(0).getQuestionText()));
-           
+            story.getQuestions() != null && !story.getQuestions().isEmpty() ? story.getQuestions().get(0).getId() : null,
+            story.getQuestions() != null && !story.getQuestions().isEmpty() ? story.getQuestions().get(0).getQuestionText() : null
+        );
         return dto;
     }
 
-    public static Map<String, Object> parseQuestionJson(String jsonString) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(jsonString, new TypeReference<Map<String, Object>>() {});
-        } catch (Exception e) {
-            return Collections.emptyMap();
+    public static StoryNarrativeDTO toNarrativeDTO(StoryNarrative narrative) {
+        if (narrative == null) {
+            return null;
         }
+        return new StoryNarrativeDTO(
+            narrative.getId(),
+            null,
+            "narrative.getContent()",
+            narrative.getCreatedAt()
+        );
     }
 }

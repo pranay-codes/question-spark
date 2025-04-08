@@ -3,6 +3,9 @@ package com.insyte.questionspark.backend.domain.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
+import org.hibernate.annotations.Type;
 
 @Entity
 @Table(name = "story_questions")
@@ -23,7 +26,8 @@ public class StoryQuestion {
     private String questionType;
     
     @Column(name = "question_text", columnDefinition = "jsonb")
-    private String questionText;
+    @Type(JsonBinaryType.class)
+    private JsonNode questionText;
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -63,11 +67,11 @@ public class StoryQuestion {
         this.questionType = questionType;
     }
 
-    public String getQuestionText() {
+    public JsonNode getQuestionText() {
         return questionText;
     }
 
-    public void setQuestionText(String questionText) {
+    public void setQuestionText(JsonNode questionText) {
         this.questionText = questionText;
     }
 

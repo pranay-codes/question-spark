@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.ArrayList;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "stories")
@@ -22,7 +23,7 @@ public class Story {
     private String initialPrompt;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "author_id")
+    @JoinColumn(name = "author_id", nullable = true)
     private Profile author;
     
     @Column(name = "created_at")

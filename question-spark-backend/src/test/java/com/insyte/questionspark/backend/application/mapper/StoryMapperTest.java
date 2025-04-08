@@ -11,6 +11,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,72 +56,6 @@ class StoryMapperTest {
         """;
 
     @Test
-    @DisplayName("Should parse complex JSON question structure")
-    void parseQuestionJson_ShouldHandleComplexJson() {
-        // Arrange
-        StoryQuestion question = new StoryQuestion();
-        question.setQuestionText(COMPLEX_JSON);
-
-        // Act
-        Map<String, Object> result = StoryMapper.parseQuestionJson(question.getQuestionText());
-
-        // Assert
-        assertThat(result).isNotEmpty();
-        
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> questions = (List<Map<String, Object>>) result.get("questions");
-        assertThat(questions).hasSize(1);
-        
-        Map<String, Object> firstQuestion = questions.get(0);
-        
-        // Verify question structure
-        @SuppressWarnings("unchecked")
-        Map<String, Object> questionData = (Map<String, Object>) firstQuestion.get("question");
-        assertThat(questionData)
-            .containsEntry("type", "text")
-            .containsEntry("content", "What should the robot do after finding the puppy?");
-        
-        // Verify response structure
-        @SuppressWarnings("unchecked")
-        Map<String, Object> responseData = (Map<String, Object>) firstQuestion.get("response");
-        assertThat(responseData)
-            .containsEntry("type", "generated")
-            .containsEntry("content", "The robot gently picks up the puppy and looks around.");
-        
-        // Verify follow_ups structure
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> followUps = (List<Map<String, Object>>) firstQuestion.get("follow_ups");
-        assertThat(followUps).hasSize(2);
-        
-        // Verify first follow-up
-        assertThat(followUps.get(0))
-            .containsEntry("action", "Search for the puppy's owner");
-    }
-
-    @Test
-    @DisplayName("Should handle null JSON string")
-    void parseQuestionJson_ShouldHandleNullInput() {
-        // Act
-        Map<String, Object> result = StoryMapper.parseQuestionJson(null);
-
-        // Assert
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    @DisplayName("Should handle invalid JSON string")
-    void parseQuestionJson_ShouldHandleInvalidJson() {
-        // Arrange
-        String invalidJson = "{ invalid json }";
-
-        // Act
-        Map<String, Object> result = StoryMapper.parseQuestionJson(invalidJson);
-
-        // Assert
-        assertThat(result).isEmpty();
-    }
-
-    @Test
     @DisplayName("Should map Story to StoryDto correctly")
     void toDto_ShouldMapAllFields() {
         // Arrange
@@ -139,16 +78,18 @@ class StoryMapperTest {
 
     @Test
     @DisplayName("Should map Story to StoryDetailDTO with questions")
-    void toDetailDTO_ShouldMapWithQuestions() {
+    void toDetailDTO_ShouldMapWithQuestions() throws JsonMappingException, JsonProcessingException {
         // Arrange
         Story story = new Story();
         story.setId(UUID.randomUUID());
         story.setTitle("Test Story");
         story.setDescription("Test Description");
         story.setInitialPrompt("Initial prompt");
-
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(COMPLEX_JSON);
         StoryQuestion question = new StoryQuestion();
-        question.setQuestionText(COMPLEX_JSON);
+        question.setId(UUID.randomUUID());
+        question.setQuestionText(jsonNode);
         story.setQuestions(new ArrayList<>(List.of(question)));
 
         // Act
@@ -160,6 +101,7 @@ class StoryMapperTest {
         assertThat(detailDTO.title()).isEqualTo(story.getTitle());
         assertThat(detailDTO.description()).isEqualTo(story.getDescription());
         assertThat(detailDTO.initialPrompt()).isEqualTo(story.getInitialPrompt());
-        assertThat(detailDTO.questions()).isNotEmpty();
+        assertThat(detailDTO.questionId()).isEqualTo(question.getId());
+        assertThat(detailDTO.question()).isEqualTo(question.getQuestionText());
     }
 }

@@ -25,6 +25,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.insyte.questionspark.backend.application.port.in.StoryManagementUseCase;
 import com.insyte.questionspark.backend.domain.exception.ServiceException;
 import com.insyte.questionspark.backend.domain.exception.StoryNotFoundException;
@@ -157,7 +160,7 @@ public class StoryControllerTest {
                 .andExpect(jsonPath("$.title", is("Test Story")))
                 .andExpect(jsonPath("$.description", is("Description")))
                 .andExpect(jsonPath("$.initialPrompt", is("Initial prompt")))
-                .andExpect(jsonPath("$.questions").exists());
+                .andExpect(jsonPath("$.question").exists());
 
         verify(storyManagementUseCase).getStoryWithQuestions(storyId);
     }
@@ -222,10 +225,11 @@ public class StoryControllerTest {
         return story;
     }
 
-    private StoryQuestion createSampleQuestion() {
+    private StoryQuestion createSampleQuestion() throws JsonMappingException, JsonProcessingException {
         StoryQuestion question = new StoryQuestion();
         question.setId(UUID.randomUUID());
-        question.setQuestionText("""
+        ObjectMapper objectMapper = new ObjectMapper();
+        question.setQuestionText(objectMapper.readTree("""
         {
           "question": {
             "type": "text",
@@ -245,7 +249,7 @@ public class StoryControllerTest {
             }
           ]
         }
-        """);
+        """));
         return question;
     }
 
