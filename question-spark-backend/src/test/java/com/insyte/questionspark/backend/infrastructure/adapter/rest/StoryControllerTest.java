@@ -260,6 +260,31 @@ public class StoryControllerTest {
     }
 
     @Test
+    void createNarration_ReturnsBadRequest_WhenEmptyResponseText() throws Exception {
+        // Arrange
+        UUID storyId = UUID.randomUUID();
+        String requestWithEmptyResponse = """
+            {
+                "questionId": "123e4567-e89b-12d3-a456-426614174000",
+                "response": "",
+                "action": "Some action",
+                "questionText": "Some question",
+                "narrativeId": "123e4567-e89b-12d3-a456-426614174000",
+                "nextNarrative": "nextNarrative"
+
+            }
+            """;
+
+        // Act & Assert
+        mockMvc.perform(post("/api/v1/stories/{storyId}/narration", storyId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestWithEmptyResponse))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("response")))
+                .andExpect(jsonPath("$.code", is("400")));
+    }
+
+    @Test
     void createNarration_HandlesLargeContent() throws Exception {
         UUID storyId = UUID.randomUUID();
         String largeText = "a".repeat(10000); // Create a large response text
