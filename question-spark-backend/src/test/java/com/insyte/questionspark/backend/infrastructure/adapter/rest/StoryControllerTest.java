@@ -51,6 +51,7 @@ import com.insyte.questionspark.backend.domain.model.Story;
 import com.insyte.questionspark.backend.domain.model.StoryNarrative;
 import com.insyte.questionspark.backend.domain.model.StoryQuestion;
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.CreateNarrationRequest;
+import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.CreateStoryRequest;
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDTO;
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDetailDTO;
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryNarrativeDTO;
@@ -569,6 +570,54 @@ class StoryControllerTest {
             MvcResult result = future.get(1000, TimeUnit.MILLISECONDS);
             assertThat(result.getResponse().getStatus()).isEqualTo(200);
         }
+    }
+
+    // POST /api/v1/stories endpoint tests
+    @Test
+    @DisplayName("POST /stories should create story successfully")
+    void createStory_Success() throws Exception {
+        // Given
+        CreateStoryRequest request = new CreateStoryRequest();
+        request.setInitialPrompt("Create a story about space exploration");
+        UUID expectedStoryId = UUID.randomUUID();
+        when(storyManagementUseCase.createStory(any())).thenReturn(expectedStoryId);
+
+        // When/Then
+        mockMvc.perform(post("/api/v1/stories")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$", is(expectedStoryId.toString())));
+    }
+
+    @Test
+    @DisplayName("POST /stories should return 400 for empty prompt")
+    void createStory_EmptyPrompt_BadRequest() throws Exception {
+        // Given
+        CreateStoryRequest request = new CreateStoryRequest();
+        request.setInitialPrompt("");
+
+        // When/Then
+        mockMvc.perform(post("/api/v1/stories")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /stories should return 500 for service exception")
+    void createStory_ServiceException_InternalServerError() throws Exception {
+        // Given
+        CreateStoryRequest request = new CreateStoryRequest();
+        request.setInitialPrompt("Create a story about space exploration");
+        when(storyManagementUseCase.createStory(any())).thenThrow(new RuntimeException("Service error"));
+
+        // When/Then
+        mockMvc.perform(post("/api/v1/stories")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(request)))
+                .andExpect(status().isInternalServerError());
     }
 
     // Helper methods
