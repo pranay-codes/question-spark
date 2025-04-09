@@ -577,8 +577,7 @@ class StoryControllerTest {
     @DisplayName("POST /stories should create story successfully")
     void createStory_Success() throws Exception {
         // Given
-        CreateStoryRequest request = new CreateStoryRequest();
-        request.setInitialPrompt("Create a story about space exploration");
+        CreateStoryRequest request = new CreateStoryRequest("Create a story about space exploration");
         UUID expectedStoryId = UUID.randomUUID();
         when(storyManagementUseCase.createStory(any())).thenReturn(expectedStoryId);
 
@@ -595,8 +594,7 @@ class StoryControllerTest {
     @DisplayName("POST /stories should return 400 for empty prompt")
     void createStory_EmptyPrompt_BadRequest() throws Exception {
         // Given
-        CreateStoryRequest request = new CreateStoryRequest();
-        request.setInitialPrompt("");
+        CreateStoryRequest request = new CreateStoryRequest("");
 
         // When/Then
         mockMvc.perform(post("/api/v1/stories")
@@ -609,8 +607,7 @@ class StoryControllerTest {
     @DisplayName("POST /stories should return 500 for service exception")
     void createStory_ServiceException_InternalServerError() throws Exception {
         // Given
-        CreateStoryRequest request = new CreateStoryRequest();
-        request.setInitialPrompt("Create a story about space exploration");
+        CreateStoryRequest request = new CreateStoryRequest("Create a story about space exploration");
         when(storyManagementUseCase.createStory(any())).thenThrow(new RuntimeException("Service error"));
 
         // When/Then

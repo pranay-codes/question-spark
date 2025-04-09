@@ -124,7 +124,7 @@ public class StoryController {
         @Parameter(description = "Story creation request") 
         @Valid @RequestBody CreateStoryRequest request
     ) throws Exception {
-        UUID storyId = storyManagementUseCase.createStory(request.getInitialPrompt());
+        UUID storyId = storyManagementUseCase.createStory(request.initialPrompt());
         return ResponseEntity.status(HttpStatus.CREATED).body(storyId);
     }
 
