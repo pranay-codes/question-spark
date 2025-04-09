@@ -5,6 +5,30 @@ Content-Type: application/json
     "questionId": "6ab1158a-fa7a-4350-942e-d7a3926eb36e",
     "questionText": "What should the robot do after finding the puppy?",
     "response": "The robot gently picks up the puppy and looks around.",
+              "action": "Take the puppy home",
+
+    "nextNarrative": {
+          "action": "Take the puppy home",
+          "narrative": {
+            "id": "narrative-002",
+            "content": "The robot cradles the puppy and heads back to its lab, making a cozy bed from spare circuit cushions."
+          }
+    },
+    "profileId": "ff43d36d-1d49-4827-8c2a-ed6ee6390e2e"
+}
+
+
+### with ParentNarrativeId
+POST http://localhost:8080/api/v1/stories/1298d2ac-1366-4569-977a-d5db1e5dd9f7/narration
+Content-Type: application/json
+
+{
+    "parentNarrativeId": "b8b14c08-bdb7-45ef-9f8f-1bf5332a9f62",
+    "questionId": "6ab1158a-fa7a-4350-942e-d7a3926eb36e",
+    "questionText": "What should the robot do after finding the puppy?",
+    "response": "The robot gently picks up the puppy and looks around.",
+              "action": "Take the puppy home",
+
     "nextNarrative": {
           "action": "Take the puppy home",
           "narrative": {
