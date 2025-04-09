@@ -20,6 +20,7 @@ import com.insyte.questionspark.backend.application.port.out.StoryRepositoryPort
 import com.insyte.questionspark.backend.domain.exception.ServiceException;
 import com.insyte.questionspark.backend.domain.exception.StoryNotFoundException;
 import com.insyte.questionspark.backend.domain.model.Story;
+import com.insyte.questionspark.backend.infrastructure.adapter.openai.OpenAIService;
 
 @ExtendWith(MockitoExtension.class)
 public class StoryManagementServiceTest {
@@ -29,9 +30,12 @@ public class StoryManagementServiceTest {
 
     private StoryManagementService storyManagementService;
 
+    @Mock
+    private OpenAIService openAIService;
+    
     @BeforeEach
     void setUp() {
-        storyManagementService = new StoryManagementService(storyRepositoryPort);
+        storyManagementService = new StoryManagementService(storyRepositoryPort, openAIService);
     }
 
     @Test

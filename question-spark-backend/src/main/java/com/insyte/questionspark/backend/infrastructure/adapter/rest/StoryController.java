@@ -27,6 +27,7 @@ import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDTO
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryDetailDTO;
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.CreateNarrationRequest;
 import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryNarrativeDTO;
+import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.CreateStoryRequest;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -108,6 +109,23 @@ public class StoryController {
             StoryNarrativeDTO narrativeDTO = storyMapper.toNarrativeDTO(narrative);
             return ResponseEntity.status(HttpStatus.OK).body(narrativeDTO);
 
+    }
+
+    @Operation(summary = "Create new story", description = "Creates a new story using OpenAI")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Successfully created story"),
+        @ApiResponse(responseCode = "500", description = "Internal server error occurred")
+    })
+    @PostMapping(
+        produces = MediaType.APPLICATION_JSON_VALUE,
+        consumes = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<UUID> createStory(
+        @Parameter(description = "Story creation request") 
+        @Valid @RequestBody CreateStoryRequest request
+    ) throws Exception {
+        UUID storyId = storyManagementUseCase.createStory(request.getInitialPrompt());
+        return ResponseEntity.status(HttpStatus.CREATED).body(storyId);
     }
 
 }
