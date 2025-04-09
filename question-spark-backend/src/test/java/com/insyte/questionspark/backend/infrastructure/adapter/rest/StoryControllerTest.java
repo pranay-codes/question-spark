@@ -175,6 +175,95 @@ public class StoryControllerTest {
     }
 
     @Test
+    void createNarration_ReturnsBadRequest_WhenRequestBodyIsInvalid() throws Exception {
+        UUID storyId = UUID.randomUUID();
+        String invalidJson = "{\"invalid\": \"json\"}";
+
+        mockMvc.perform(post("/api/v1/stories/{storyId}/narration", storyId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(invalidJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.code", is("400")));
+    }
+
+    @Test
+    void createNarration_ReturnsNotFound_WhenStoryDoesNotExist() throws Exception {
+        UUID storyId = UUID.randomUUID();
+        CreateNarrationRequest request = new CreateNarrationRequest(
+            null, UUID.randomUUID(), "questionText", "responseText", 
+            "action", null, UUID.randomUUID().toString());
+
+        when(storyNarrationUseCase.createNarration(any(), any()))
+            .thenThrow(new StoryNotFoundException("Story not found"));
+
+        mockMvc.perform(post("/api/v1/stories/{storyId}/narration", storyId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is("Story not found")))
+                .andExpect(jsonPath("$.code", is("404")));
+    }
+
+    @Test
+    void createNarration_ReturnsServerError_WhenUnexpectedErrorOccurs() throws Exception {
+        UUID storyId = UUID.randomUUID();
+        CreateNarrationRequest request = new CreateNarrationRequest(
+            null, UUID.randomUUID(), "questionText", "responseText", 
+            "action", null, UUID.randomUUID().toString());
+
+        when(storyNarrationUseCase.createNarration(any(), any()))
+            .thenThrow(new ServiceException("Unexpected error"));
+
+        mockMvc.perform(post("/api/v1/stories/{storyId}/narration", storyId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(request)))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message", is("Unexpected error")))
+                .andExpect(jsonPath("$.code", is("001")));
+    }
+
+    @Test
+    void createNarration_ReturnsBadRequest_WhenInvalidUUID() throws Exception {
+        CreateNarrationRequest request = new CreateNarrationRequest(
+            null, UUID.randomUUID(), "questionText", "responseText", 
+            "action", null, UUID.randomUUID().toString());
+
+        mockMvc.perform(post("/api/v1/stories/invalid-uuid/narration")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", containsString("Invalid UUID")))
+                .andExpect(jsonPath("$.code", is("400")));
+    }
+
+    @Test
+    void createNarration_HandlesLargeContent() throws Exception {
+        UUID storyId = UUID.randomUUID();
+        String largeText = "a".repeat(10000); // Create a large response text
+        CreateNarrationRequest request = new CreateNarrationRequest(
+            null, UUID.randomUUID(), "questionText", largeText, 
+            "action", null, UUID.randomUUID().toString());
+
+        StoryNarrative narrative = new StoryNarrative();
+        narrative.setId(UUID.randomUUID());
+        narrative.setResponseText(largeText);
+        narrative.setCreatedAt(LocalDateTime.now());
+
+        when(storyNarrationUseCase.createNarration(any(), any()))
+            .thenReturn(narrative);
+        when(storyMapper.toNarrativeDTO(any())).thenReturn(new StoryNarrativeDTO(
+            narrative.getId(), storyId, narrative.getResponseText(), narrative.getCreatedAt()
+        ));
+
+        mockMvc.perform(post("/api/v1/stories/{storyId}/narration", storyId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", is(largeText)));
+    }
+
+    @Test
     void getAllStories_HandlesException_WhenServiceThrowsError() throws Exception {
         // Arrange
         when(storyManagementUseCase.getAllStories())

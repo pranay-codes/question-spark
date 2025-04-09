@@ -30,6 +30,7 @@ import com.insyte.questionspark.backend.infrastructure.adapter.rest.dto.StoryNar
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -101,16 +102,12 @@ public class StoryController {
         @Parameter(description = "ID of the story") 
         @PathVariable("storyId") UUID storyId,
         @Parameter(description = "Narration details") 
-        @RequestBody CreateNarrationRequest request
+        @Valid @RequestBody CreateNarrationRequest request
     ) throws Exception {
-        try {
             StoryNarrative narrative = storyNarrationUseCase.createNarration(storyId, request);
             StoryNarrativeDTO narrativeDTO = storyMapper.toNarrativeDTO(narrative);
             return ResponseEntity.status(HttpStatus.OK).body(narrativeDTO);
-        } catch (Exception e) {
-            LOGGER.error("Error creating narration for story ID {}: {}", storyId, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); // Or a more specific error response
-        }
+
     }
 
 }
