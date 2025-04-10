@@ -10,13 +10,13 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.insyte.questionspark.backend.application.port.in.StoryManagementUseCase;
+import com.insyte.questionspark.backend.application.port.out.OpenAIServicePort;
 import com.insyte.questionspark.backend.application.port.out.StoryQuestionRepositoryPort;
 import com.insyte.questionspark.backend.application.port.out.StoryRepositoryPort;
 import com.insyte.questionspark.backend.domain.exception.ServiceException;
 import com.insyte.questionspark.backend.domain.exception.StoryNotFoundException;
 import com.insyte.questionspark.backend.domain.model.Story;
 import com.insyte.questionspark.backend.domain.model.StoryQuestion;
-import com.insyte.questionspark.backend.infrastructure.adapter.openai.OpenAIService;
 import com.insyte.questionspark.backend.infrastructure.adapter.openai.dto.StoryGenerationResponse;
 
 import jakarta.transaction.Transactional;
@@ -28,12 +28,12 @@ public class StoryManagementService implements StoryManagementUseCase {
     private static final Logger LOG = LoggerFactory.getLogger(StoryManagementService.class);
 
     private final StoryRepositoryPort storyRepositoryPort;
-    private final OpenAIService openAIService;
+    private final OpenAIServicePort openAIService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public StoryManagementService(
         StoryRepositoryPort storyRepositoryPort,
-        OpenAIService openAIService) {
+        OpenAIServicePort openAIService) {
         this.storyRepositoryPort = storyRepositoryPort;
         this.openAIService = openAIService;
     }

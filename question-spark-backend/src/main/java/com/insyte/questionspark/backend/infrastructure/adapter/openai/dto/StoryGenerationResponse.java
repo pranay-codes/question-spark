@@ -1,11 +1,12 @@
 package com.insyte.questionspark.backend.infrastructure.adapter.openai.dto;
 
-import org.aspectj.weaver.patterns.TypePatternQuestions.Question;
+import java.util.List;
+
 
 public record StoryGenerationResponse(
     String title,
     String description,
     String initialPrompt,
-    Question[] questions) {
+    List<Question> questions) {
     
 }

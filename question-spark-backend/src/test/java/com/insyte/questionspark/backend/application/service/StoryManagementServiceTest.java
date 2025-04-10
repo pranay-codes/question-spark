@@ -4,6 +4,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,14 +16,19 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.insyte.questionspark.backend.application.port.out.OpenAIServicePort;
 import com.insyte.questionspark.backend.application.port.out.StoryRepositoryPort;
 import com.insyte.questionspark.backend.domain.exception.ServiceException;
 import com.insyte.questionspark.backend.domain.exception.StoryNotFoundException;
 import com.insyte.questionspark.backend.domain.model.Story;
-import com.insyte.questionspark.backend.infrastructure.adapter.openai.OpenAIService;
+import com.insyte.questionspark.backend.infrastructure.adapter.openai.dto.Question;
+import com.insyte.questionspark.backend.infrastructure.adapter.openai.dto.StoryGenerationResponse;
 
 @ExtendWith(MockitoExtension.class)
 public class StoryManagementServiceTest {
@@ -28,14 +36,18 @@ public class StoryManagementServiceTest {
     @Mock
     private StoryRepositoryPort storyRepositoryPort;
 
+    @Mock
+    private OpenAIServicePort openAIService;
+
+    @InjectMocks
     private StoryManagementService storyManagementService;
 
-    @Mock
-    private OpenAIService openAIService;
-    
+    private ObjectMapper objectMapper;
+
     @BeforeEach
     void setUp() {
         storyManagementService = new StoryManagementService(storyRepositoryPort, openAIService);
+        objectMapper = new ObjectMapper();
     }
 
     @Test
@@ -120,6 +132,49 @@ public class StoryManagementServiceTest {
         assertThatThrownBy(() -> storyManagementService.getStoryWithQuestions(storyId))
             .isInstanceOf(ServiceException.class)
             .hasMessageContaining("Error fetching story with questions: Database error");
+    }
+
+    @Test
+    void createStory_Success() throws Exception {
+        // Arrange
+        String initialPrompt = "Test prompt";
+        UUID expectedId = UUID.randomUUID();
+
+        StoryGenerationResponse response = new StoryGenerationResponse(
+            "Test Title",
+            "Test Description",
+            initialPrompt,
+            Collections.singletonList(new Question("Test question", "Test question text", Collections.emptyList()))
+        );
+
+        Story savedStory = new Story();
+        savedStory.setId(expectedId);
+        
+        when(openAIService.generateStory(initialPrompt)).thenReturn(response);
+        when(storyRepositoryPort.save(any(Story.class))).thenReturn(savedStory);
+
+        // Act
+        UUID resultId = storyManagementService.createStory(initialPrompt);
+
+        // Assert
+        assertEquals(expectedId, resultId);
+        verify(storyRepositoryPort).save(argThat(story -> 
+            story.getTitle().equals("Test Title") &&
+            story.getDescription().equals("Test Description") &&
+            story.getInitialPrompt().equals(initialPrompt) &&
+            story.getQuestions().size() == 1
+        ));
+    }
+
+    @Test
+    void createStory_OpenAIServiceFailure() throws Exception {
+        // Arrange
+        String initialPrompt = "Test prompt";
+        when(openAIService.generateStory(initialPrompt)).thenThrow(new RuntimeException("API Error"));
+
+        // Act & Assert
+        assertThrows(Exception.class, () -> storyManagementService.createStory(initialPrompt));
+        verify(storyRepositoryPort, never()).save(any());
     }
 
     private Story createSampleStory(String title) {

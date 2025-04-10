@@ -9,11 +9,12 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.insyte.questionspark.backend.application.port.out.OpenAIServicePort;
 import com.insyte.questionspark.backend.infrastructure.adapter.openai.dto.StoryGenerationResponse;
 import com.insyte.questionspark.backend.infrastructure.config.OpenAIProperties;
 
 @Service
-public class OpenAIServiceImpl implements OpenAIService {
+public class OpenAIServiceImpl implements OpenAIServicePort {
     private final RestTemplate restTemplate;
     private final OpenAIProperties properties;
     private final ObjectMapper objectMapper;
