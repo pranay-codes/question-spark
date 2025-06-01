@@ -1,0 +1,106 @@
+package com.insyte.questionspark.backend.infrastructure.adapter.openai;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.insyte.questionspark.backend.application.port.out.OpenAIServicePort;
+import com.insyte.questionspark.backend.infrastructure.adapter.openai.dto.StoryGenerationResponse;
+import com.insyte.questionspark.backend.infrastructure.config.OpenAIProperties;
+
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.openai.OpenAiChatModel;
+
+class OpenAIServiceImplTest {
+    @Mock
+    private OpenAiChatModel chatModel;
+
+    @Mock
+    private OpenAIProperties openAIProperties;
+
+    private OpenAIServicePort openAIService;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        openAIService = new OpenAIServiceImpl(chatModel, openAIProperties);
+        when(openAIProperties.model()).thenReturn("gpt-3.5-turbo");  // Mock the model name
+        when(openAIProperties.maxTokens()).thenReturn(2000); // Mock max tokens
+        when(openAIProperties.temperature()).thenReturn(0.7); // Mock temperature
+    }
+
+    @Test
+    void generateStory_Success() throws Exception {
+        // Arrange
+        String initialPrompt = "Test prompt";
+        String mockResponse = """
+            {
+                "title": "Test Story",
+                "description": "A test description",
+                "initialPrompt": "Test prompt",
+                "questions": []
+            }
+            """;
+
+        ChatResponse mockChatResponse = mock(ChatResponse.class);
+        Generation mockGeneration = mock(Generation.class);
+        
+        when(mockGeneration.getContent()).thenReturn(mockResponse);
+        when(mockChatResponse.getResult()).thenReturn(mockGeneration);
+        when(chatClient.call()).thenReturn(new TestChatClientBuilder(mockChatResponse));
+
+        // Act
+        StoryGenerationResponse response = openAIService.generateStory(initialPrompt);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals("Test Story", response.title());
+        assertEquals("A test description", response.description());
+    }
+
+    @Test
+    void generateStory_EmptyResponse_ThrowsException() {
+        // Arrange
+        String initialPrompt = "Test prompt";
+        ChatResponse mockChatResponse = mock(ChatResponse.class);
+        Generation mockGeneration = mock(Generation.class);
+        
+        when(mockGeneration.getContent()).thenReturn("");
+        when(mockChatResponse.getResult()).thenReturn(mockGeneration);
+        when(chatClient.call()).thenReturn(new TestChatClientBuilder(mockChatResponse));
+
+        // Act & Assert
+        assertThrows(OpenAIException.class, () -> {
+            openAIService.generateStory(initialPrompt);
+        });
+    }
+}
+
+// Helper class for building chat responses in tests
+class TestChatClientBuilder {
+    private final ChatResponse response;
+    
+    TestChatClientBuilder(ChatResponse response) {
+        this.response = response;
+    }
+    
+    public TestChatClientBuilder withMessages(Message... messages) {
+        return this;
+    }
+    
+    public TestChatClientBuilder withOptions(Object options) {
+        return this;
+    }
+    
+    public ChatResponse execute() {
+        return response;
+    }
+}
